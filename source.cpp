@@ -8,35 +8,46 @@ struct surfaces
 struct arm
 {
     int ArmLength = 10;
-    int OneArmUpX,
-        OneArmUpY,
-        OneArmDownX,
-        OneArmDownY,
-        OneArmLeftX,
-        OneArmLeftY,
-        OneArmRightX,
-        OneArmRightY,
-        TwoArmUpX,
-        TwoArmUpY,
-        TwoArmDownX,
-        TwoArmDownY,
-        TwoArmLeftX,
-        TwoArmLeftY,
-        TwoArmRightX,
-        TwoArmRightY;
+    int OneVX1,
+        OneVY1,
+        OneVX2,
+        OneVY2,
+        OneHX1,
+        OneHY1,
+        OneHX2,
+        OneHY2,
+        TwoVX1,
+        TwoVY1,
+        TwoVX2,
+        TwoVY2,
+        TwoHX1,
+        TwoHY1,
+        TwoHX2,
+        TwoHY2;
 };
 struct rects
 {
     SDL_Rect PlayfieldRect;
     SDL_Rect PlayerOne, PlayerTwo;
     SDL_Rect Circle;
+    SDL_Rect OneHand[4], TwoHand[4];
     arm Arms;
+};
+enum num
+{
+    One,
+    Two,
+    None
 };
 struct object
 {
-    float PosX, PosY;
-    SDL_Surface* Surface;
+    int PosX, PosY;
+    SDL_Surface *Surface;
     SDL_Texture *Texture;
+    bool ClickableOne, ClickableTwo;
+    num AttachedTo = None;
+    int By;
+    int dx, dy;
 };
 
 object LoadObject(char *TextureFile)
@@ -49,6 +60,7 @@ object LoadObject(char *TextureFile)
 struct objects
 {
     object Circle = LoadObject("data/textures/circle.png");
+    object OneHand[4], TwoHand[4];
 };
 
 struct fonts
@@ -96,7 +108,7 @@ struct keys
 };
 struct player
 {
-    float PosX, PosY;
+    int PosX, PosY;
 };
 struct players
 {
@@ -127,6 +139,17 @@ void PollEvents(SDL_Event *Event, keys *Keys)
 {
     while (SDL_PollEvent(Event))
     {
+        if (Event->type == SDL_KEYDOWN)
+        {
+            if (Event->key.keysym.sym == SDLK_SPACE && Event->key.repeat == false)
+            {
+                Keys->Space_Key = true;
+            }
+            if (Event->key.keysym.sym == SDLK_TAB && Event->key.repeat == false)
+            {
+                Keys->Tab_Key = true;
+            }
+        }
         if (Event->type == SDL_QUIT)
         {
             Running = false;
@@ -253,19 +276,86 @@ void PlayerUpdate(rects *R, keys *K, players *P, playfield Playfield)
     {
         P->Two.PosY = -R->PlayfieldRect.h / 2 + 1 + R->Arms.ArmLength;
     }
+
+    R->PlayerOne.x = WindowWidth * 0.5f + P->One.PosX;
+    R->PlayerOne.y = WindowHeight * 0.5f + P->One.PosY;
+    R->PlayerTwo.x = WindowWidth * 0.5f + P->Two.PosX;
+    R->PlayerTwo.y = WindowHeight * 0.5f + P->Two.PosY;
 }
 
-void RectsUpdate(rects *R, players *P)
+void ObjectsUpdate(objects *O, players *P, rects *R, keys *K)
 {
-    R->PlayerOne.x = WindowWidth * 0.5f + P->One.PosX;
-    R->PlayerOne.y = WindowHeight * 0.5f + P->One.PosY;
-    R->PlayerOne.x = WindowWidth * 0.5f + P->One.PosX;
-    R->PlayerOne.y = WindowHeight * 0.5f + P->One.PosY;
+    bool Past = false;
+    if (O->Circle.AttachedTo == One)
+    {
+        Past = true;
+    }
+    if (O->Circle.AttachedTo == Two)
+    {
+        Past = true;
+    }
 
-    R->PlayerTwo.x = WindowWidth * 0.5f + P->Two.PosX;
-    R->PlayerTwo.y = WindowHeight * 0.5f + P->Two.PosY;
-    R->PlayerTwo.x = WindowWidth * 0.5f + P->Two.PosX;
-    R->PlayerTwo.y = WindowHeight * 0.5f + P->Two.PosY;
+    for (int i = 0; i < 4; i++)
+    {
+        if (SDL_HasIntersection(&R->OneHand[i], &R->Circle) == SDL_TRUE)
+        {
+            O->Circle.ClickableOne = true;
+            O->Circle.By = i;
+            break;
+        }
+        if (SDL_HasIntersection(&R->OneHand[i], &R->Circle) == SDL_FALSE)
+        {
+            O->Circle.ClickableOne = false;
+            O->Circle.By = i;
+        }
+    }
+    for (int i = 0; i < 4; i++)
+    {
+        if (SDL_HasIntersection(&R->TwoHand[i], &R->Circle) == SDL_TRUE)
+        {
+            O->Circle.ClickableTwo = true;
+            O->Circle.By = i;
+            break;
+        }
+        if (SDL_HasIntersection(&R->TwoHand[i], &R->Circle) == SDL_FALSE)
+        {
+            O->Circle.ClickableTwo = false;
+            O->Circle.By = i;
+        }
+    }
+
+    if (O->Circle.ClickableOne && K->Space_Key)
+    {
+        O->Circle.AttachedTo = One;
+        O->Circle.dx = abs(R->Circle.x - R->PlayerOne.x);
+        O->Circle.dy = abs(R->Circle.y - R->PlayerOne.y);
+    }
+    if (O->Circle.ClickableOne && K->Tab_Key)
+    {
+        O->Circle.AttachedTo = Two;
+        O->Circle.dx = abs(R->Circle.x - R->PlayerTwo.x);
+        O->Circle.dy = abs(R->Circle.y - R->PlayerTwo.y);
+    }
+
+    if (O->Circle.AttachedTo == One)
+    {
+        R->Circle.x = R->PlayerOne.x - O->Circle.dx;
+        R->Circle.y = R->PlayerOne.y - O->Circle.dy;
+    }
+    if (O->Circle.AttachedTo == Two)
+    {
+        R->Circle.x = R->PlayerTwo.x - O->Circle.dx;
+        R->Circle.y = R->PlayerTwo.y - O->Circle.dy;
+    }
+
+    if (Past && K->Space_Key)
+    {
+        O->Circle.AttachedTo = None;
+    }
+    if (Past && K->Tab_Key)
+    {
+        O->Circle.AttachedTo = None;
+    }
 }
 
 void RenderText(TTF_Font *Font, char *text, Uint8 R, Uint8 G, Uint8 B,
@@ -289,20 +379,40 @@ void RenderText(TTF_Font *Font, char *text, Uint8 R, Uint8 G, Uint8 B,
 }
 void SetArms(rects *R)
 {
-    R->Arms.OneArmUpX = R->PlayerOne.x + R->PlayerOne.w / 2,
-    R->Arms.OneArmUpY = R->PlayerOne.y - R->Arms.ArmLength,
-    R->Arms.OneArmDownX = R->PlayerOne.x + R->PlayerOne.w / 2,
-    R->Arms.OneArmDownY = R->PlayerOne.y + R->PlayerOne.h + R->Arms.ArmLength,
-    R->Arms.OneArmLeftX = R->PlayerOne.x - R->Arms.ArmLength,
-    R->Arms.OneArmLeftY = R->PlayerOne.y + R->PlayerOne.h / 2,
-    R->Arms.OneArmRightX = R->PlayerOne.x + R->PlayerOne.w + R->Arms.ArmLength,
-    R->Arms.OneArmRightY = R->PlayerOne.y + R->PlayerOne.h / 2;
-    R->Arms.TwoArmUpX = R->PlayerTwo.x + R->PlayerTwo.w / 2,
-    R->Arms.TwoArmUpY = R->PlayerTwo.y - R->Arms.ArmLength,
-    R->Arms.TwoArmDownX = R->PlayerTwo.x + R->PlayerTwo.w / 2,
-    R->Arms.TwoArmDownY = R->PlayerTwo.y + R->PlayerTwo.h + R->Arms.ArmLength,
-    R->Arms.TwoArmLeftX = R->PlayerTwo.x - R->Arms.ArmLength,
-    R->Arms.TwoArmLeftY = R->PlayerTwo.y + R->PlayerTwo.h / 2,
-    R->Arms.TwoArmRightX = R->PlayerTwo.x + R->PlayerTwo.w + R->Arms.ArmLength,
-    R->Arms.TwoArmRightY = R->PlayerTwo.y + R->PlayerTwo.h / 2;
+    R->Arms.OneVX1 = R->PlayerOne.x + R->PlayerOne.w / 2,
+    R->Arms.OneVY1 = R->PlayerOne.y - R->Arms.ArmLength,
+    R->Arms.OneVX2 = R->PlayerOne.x + R->PlayerOne.w / 2,
+    R->Arms.OneVY2 = R->PlayerOne.y + R->PlayerOne.h + R->Arms.ArmLength,
+    R->Arms.OneHX1 = R->PlayerOne.x - R->Arms.ArmLength,
+    R->Arms.OneHY1 = R->PlayerOne.y + R->PlayerOne.h / 2,
+    R->Arms.OneHX2 = R->PlayerOne.x + R->PlayerOne.w + R->Arms.ArmLength,
+    R->Arms.OneHY2 = R->PlayerOne.y + R->PlayerOne.h / 2;
+    R->Arms.TwoVX1 = R->PlayerTwo.x + R->PlayerTwo.w / 2,
+    R->Arms.TwoVY1 = R->PlayerTwo.y - R->Arms.ArmLength,
+    R->Arms.TwoVX2 = R->PlayerTwo.x + R->PlayerTwo.w / 2,
+    R->Arms.TwoVY2 = R->PlayerTwo.y + R->PlayerTwo.h + R->Arms.ArmLength,
+    R->Arms.TwoHX1 = R->PlayerTwo.x - R->Arms.ArmLength,
+    R->Arms.TwoHY1 = R->PlayerTwo.y + R->PlayerTwo.h / 2,
+    R->Arms.TwoHX2 = R->PlayerTwo.x + R->PlayerTwo.w + R->Arms.ArmLength,
+    R->Arms.TwoHY2 = R->PlayerTwo.y + R->PlayerTwo.h / 2;
+
+    R->OneHand[0].x = R->Arms.OneHX1 - R->OneHand[0].w / 2;
+    R->OneHand[1].x = R->Arms.OneVX1 - R->OneHand[1].w / 2;
+    R->OneHand[2].x = R->Arms.OneHX2 - R->OneHand[2].w / 2;
+    R->OneHand[3].x = R->Arms.OneVX2 - R->OneHand[3].w / 2;
+
+    R->OneHand[0].y = R->Arms.OneHY1 - R->OneHand[0].h / 2;
+    R->OneHand[1].y = R->Arms.OneVY1 - R->OneHand[1].h / 2;
+    R->OneHand[2].y = R->Arms.OneHY2 - R->OneHand[2].h / 2;
+    R->OneHand[3].y = R->Arms.OneVY2 - R->OneHand[3].h / 2;
+
+    R->TwoHand[0].x = R->Arms.TwoHX1 - R->TwoHand[0].w / 2;
+    R->TwoHand[1].x = R->Arms.TwoVX1 - R->TwoHand[1].w / 2;
+    R->TwoHand[2].x = R->Arms.TwoHX2 - R->TwoHand[2].w / 2;
+    R->TwoHand[3].x = R->Arms.TwoVX2 - R->TwoHand[3].w / 2;
+
+    R->TwoHand[0].y = R->Arms.TwoHY1 - R->TwoHand[0].h / 2;
+    R->TwoHand[1].y = R->Arms.TwoVY1 - R->TwoHand[1].h / 2;
+    R->TwoHand[2].y = R->Arms.TwoHY2 - R->TwoHand[2].h / 2;
+    R->TwoHand[3].y = R->Arms.TwoVY2 - R->TwoHand[3].h / 2;
 }

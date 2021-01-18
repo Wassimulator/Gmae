@@ -10,17 +10,21 @@ void Render(objects *O, rects *R)
 
     SDL_RenderCopy(Renderer, O->Circle.Texture, 0, &R->Circle);
 
-    SetArms(R);
-
     SDL_SetRenderDrawColor(Renderer, 255, 25, 25, 255);
     SDL_RenderFillRect(Renderer, &R->PlayerOne);
-    SDL_RenderDrawLine(Renderer, R->Arms.OneArmLeftX, R->Arms.OneArmLeftY, R->Arms.OneArmRightX, R->Arms.OneArmRightY);
-    SDL_RenderDrawLine(Renderer, R->Arms.OneArmUpX, R->Arms.OneArmUpY, R->Arms.OneArmDownX, R->Arms.OneArmDownY);
+    SDL_RenderDrawLine(Renderer, R->Arms.OneHX1, R->Arms.OneHY1, R->Arms.OneHX2, R->Arms.OneHY2);
+    SDL_RenderDrawLine(Renderer, R->Arms.OneVX1, R->Arms.OneVY1, R->Arms.OneVX2, R->Arms.OneVY2);
 
     SDL_SetRenderDrawColor(Renderer, 25, 25, 255, 255);
     SDL_RenderFillRect(Renderer, &R->PlayerTwo);
-    SDL_RenderDrawLine(Renderer, R->Arms.TwoArmLeftX, R->Arms.TwoArmLeftY, R->Arms.TwoArmRightX, R->Arms.TwoArmRightY);
-    SDL_RenderDrawLine(Renderer, R->Arms.TwoArmUpX, R->Arms.TwoArmUpY, R->Arms.TwoArmDownX, R->Arms.TwoArmDownY);
+    SDL_RenderDrawLine(Renderer, R->Arms.TwoHX1, R->Arms.TwoHY1, R->Arms.TwoHX2, R->Arms.TwoHY2);
+    SDL_RenderDrawLine(Renderer, R->Arms.TwoVX1, R->Arms.TwoVY1, R->Arms.TwoVX2, R->Arms.TwoVY2);
+
+    for (int i = 0; i < 4; i++)
+    {
+        SDL_RenderCopy(Renderer, O->OneHand[i].Texture, 0, &R->OneHand[i]);
+        SDL_RenderCopy(Renderer, O->TwoHand[i].Texture, 0, &R->TwoHand[i]);
+    }
 }
 
 void RenderDebugInfo(players *P, fonts *Fonts)
@@ -41,8 +45,33 @@ void InitilizeRects(rects *R)
     R->PlayerOne.h = R->PlayerOne.w = R->PlayerTwo.h = R->PlayerTwo.w = 20;
     R->Arms.ArmLength = 20;
 
-    R->Circle.h = 15;
-    R->Circle.w = 15;
+    R->Circle.h = 16;
+    R->Circle.w = 16;
+
+    for (int i = 0; i < 4; i++)
+    {
+        R->OneHand[i].h = R->OneHand[i].w = R->TwoHand[i].h = R->TwoHand[i].w = 10;
+    }
+
+    R->OneHand[0].x = R->Arms.OneHX1 - R->OneHand[0].w / 2;
+    R->OneHand[1].x = R->Arms.OneVX1 - R->OneHand[1].w / 2;
+    R->OneHand[2].x = R->Arms.OneHX2 - R->OneHand[2].w / 2;
+    R->OneHand[3].x = R->Arms.OneVX2 - R->OneHand[3].w / 2;
+
+    R->OneHand[0].y = R->Arms.OneHY1 - R->OneHand[0].h / 2;
+    R->OneHand[1].y = R->Arms.OneVY1 - R->OneHand[1].h / 2;
+    R->OneHand[2].y = R->Arms.OneHY2 - R->OneHand[2].h / 2;
+    R->OneHand[3].y = R->Arms.OneVY2 - R->OneHand[3].h / 2;
+
+    R->TwoHand[0].x = R->Arms.TwoHX1 - R->TwoHand[0].w / 2;
+    R->TwoHand[1].x = R->Arms.TwoVX1 - R->TwoHand[1].w / 2;
+    R->TwoHand[2].x = R->Arms.TwoHX2 - R->TwoHand[2].w / 2;
+    R->TwoHand[3].x = R->Arms.TwoVX2 - R->TwoHand[3].w / 2;
+
+    R->TwoHand[0].y = R->Arms.TwoHY1 - R->TwoHand[0].h / 2;
+    R->TwoHand[1].y = R->Arms.TwoVY1 - R->TwoHand[1].h / 2;
+    R->TwoHand[2].y = R->Arms.TwoHY2 - R->TwoHand[2].h / 2;
+    R->TwoHand[3].y = R->Arms.TwoVY2 - R->TwoHand[3].h / 2;
 
     CenterRectXY(&R->PlayfieldRect);
     CenterRectXY(&R->PlayerOne);
@@ -71,6 +100,11 @@ int main(int argc, char **argv)
     players P;
     playfield Playfield;
     objects O;
+    for (int i = 0; i < 4; i++)
+    {
+        O.OneHand[i] = LoadObject("data/textures/circle_red.png");
+        O.TwoHand[i] = LoadObject("data/textures/circle_blue.png");
+    }
 
     InitilizeRects(&R);
 
@@ -87,6 +121,9 @@ int main(int argc, char **argv)
     SDL_Event Event;
     while (Running)
     {
+        Keys.Space_Key = false;
+        Keys.Tab_Key = false;
+
         const int FPS = 60;
         const int frameDelay = 1000 / FPS;
         Uint32 frameStart = SDL_GetTicks();
@@ -94,8 +131,8 @@ int main(int argc, char **argv)
         PollEvents(&Event, &Keys);
 
         PlayerUpdate(&R, &Keys, &P, Playfield);
-        RectsUpdate(&R, &P);
-
+        ObjectsUpdate(&O, &P, &R, &Keys);
+        SetArms(&R);
         Render(&O, &R);
 
         int frameEnd = SDL_GetTicks();

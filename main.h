@@ -10,6 +10,7 @@
 #include <lexer.h>
 #include <iostream>
 #include <SDL_image.h>
+#include <cstdlib>
 
 using namespace std;
 

@@ -131,8 +131,8 @@ int main(int argc, char **argv)
         PollEvents(&Event, &Keys);
 
         PlayerUpdate(&R, &Keys, &P, Playfield);
-        ObjectsUpdate(&O, &P, &R, &Keys);
         SetArms(&R);
+        ObjectsUpdate(&O, &P, &R, &Keys);
         Render(&O, &R);
 
         int frameEnd = SDL_GetTicks();

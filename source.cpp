@@ -306,7 +306,6 @@ void ObjectsUpdate(objects *O, players *P, rects *R, keys *K)
         if (SDL_HasIntersection(&R->OneHand[i], &R->Circle) == SDL_FALSE)
         {
             O->Circle.ClickableOne = false;
-            O->Circle.By = i;
         }
     }
     for (int i = 0; i < 4; i++)
@@ -320,32 +319,71 @@ void ObjectsUpdate(objects *O, players *P, rects *R, keys *K)
         if (SDL_HasIntersection(&R->TwoHand[i], &R->Circle) == SDL_FALSE)
         {
             O->Circle.ClickableTwo = false;
-            O->Circle.By = i;
         }
     }
+    cout << O->Circle.By << endl;
 
-    if (O->Circle.ClickableOne && K->Space_Key)
+    if (O->Circle.ClickableOne && K->Space_Key && O->Circle.AttachedTo == None)
     {
         O->Circle.AttachedTo = One;
-        O->Circle.dx = abs(R->Circle.x - R->PlayerOne.x);
-        O->Circle.dy = abs(R->Circle.y - R->PlayerOne.y);
+        O->Circle.dx = R->Circle.x - R->PlayerOne.x;
+        O->Circle.dy = R->Circle.y - R->PlayerOne.y;
     }
-    if (O->Circle.ClickableOne && K->Tab_Key)
+    if (O->Circle.ClickableTwo && K->Tab_Key && O->Circle.AttachedTo == None)
     {
         O->Circle.AttachedTo = Two;
-        O->Circle.dx = abs(R->Circle.x - R->PlayerTwo.x);
-        O->Circle.dy = abs(R->Circle.y - R->PlayerTwo.y);
+        O->Circle.dx = R->Circle.x - R->PlayerTwo.x;
+        O->Circle.dy = R->Circle.y - R->PlayerTwo.y;
     }
 
     if (O->Circle.AttachedTo == One)
     {
-        R->Circle.x = R->PlayerOne.x - O->Circle.dx;
-        R->Circle.y = R->PlayerOne.y - O->Circle.dy;
+        /*R->Circle.x = R->PlayerOne.x + O->Circle.dx;
+        R->Circle.y = R->PlayerOne.y + O->Circle.dy;*/ // this one attaches to the point it touches instead of centering on the arm tip
+
+        if (O->Circle.By == 0)
+        {
+            R->Circle.x = R->Arms.OneHX1 - R->Circle.w / 2;
+            R->Circle.y = R->Arms.OneHY1 - R->Circle.h / 2;
+        }
+        if (O->Circle.By == 1)
+        {
+            R->Circle.x = R->Arms.OneVX1 - R->Circle.w / 2;
+            R->Circle.y = R->Arms.OneVY1 - R->Circle.h / 2;
+        }
+        if (O->Circle.By == 2)
+        {
+            R->Circle.x = R->Arms.OneHX2 - R->Circle.w / 2;
+            R->Circle.y = R->Arms.OneHY2 - R->Circle.h / 2;
+        }
+        if (O->Circle.By == 3)
+        {
+            R->Circle.x = R->Arms.OneVX2 - R->Circle.w / 2;
+            R->Circle.y = R->Arms.OneVY2 - R->Circle.h / 2;
+        }
     }
     if (O->Circle.AttachedTo == Two)
     {
-        R->Circle.x = R->PlayerTwo.x - O->Circle.dx;
-        R->Circle.y = R->PlayerTwo.y - O->Circle.dy;
+        if (O->Circle.By == 0)
+        {
+            R->Circle.x = R->Arms.TwoHX1 - R->Circle.w / 2;
+            R->Circle.y = R->Arms.TwoHY1 - R->Circle.h / 2;
+        }
+        if (O->Circle.By == 1)
+        {
+            R->Circle.x = R->Arms.TwoVX1 - R->Circle.w / 2;
+            R->Circle.y = R->Arms.TwoVY1 - R->Circle.h / 2;
+        }
+        if (O->Circle.By == 2)
+        {
+            R->Circle.x = R->Arms.TwoHX2 - R->Circle.w / 2;
+            R->Circle.y = R->Arms.TwoHY2 - R->Circle.h / 2;
+        }
+        if (O->Circle.By == 3)
+        {
+            R->Circle.x = R->Arms.TwoVX2 - R->Circle.w / 2;
+            R->Circle.y = R->Arms.TwoVY2 - R->Circle.h / 2;
+        }
     }
 
     if (Past && K->Space_Key)

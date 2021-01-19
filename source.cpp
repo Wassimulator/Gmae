@@ -286,6 +286,7 @@ void PlayerUpdate(rects *R, keys *K, players *P, playfield Playfield)
 void ObjectsUpdate(objects *O, players *P, rects *R, keys *K)
 {
     bool Past = false;
+    int By;
     if (O->Circle.AttachedTo == One)
     {
         Past = true;
@@ -300,7 +301,7 @@ void ObjectsUpdate(objects *O, players *P, rects *R, keys *K)
         if (SDL_HasIntersection(&R->OneHand[i], &R->Circle) == SDL_TRUE)
         {
             O->Circle.ClickableOne = true;
-            O->Circle.By = i;
+            By = i;
             break;
         }
         if (SDL_HasIntersection(&R->OneHand[i], &R->Circle) == SDL_FALSE)
@@ -313,7 +314,7 @@ void ObjectsUpdate(objects *O, players *P, rects *R, keys *K)
         if (SDL_HasIntersection(&R->TwoHand[i], &R->Circle) == SDL_TRUE)
         {
             O->Circle.ClickableTwo = true;
-            O->Circle.By = i;
+            By = i;
             break;
         }
         if (SDL_HasIntersection(&R->TwoHand[i], &R->Circle) == SDL_FALSE)
@@ -328,18 +329,21 @@ void ObjectsUpdate(objects *O, players *P, rects *R, keys *K)
         O->Circle.AttachedTo = One;
         O->Circle.dx = R->Circle.x - R->PlayerOne.x;
         O->Circle.dy = R->Circle.y - R->PlayerOne.y;
+        O->Circle.By = By;
     }
     if (O->Circle.ClickableTwo && K->Tab_Key && O->Circle.AttachedTo == None)
     {
         O->Circle.AttachedTo = Two;
         O->Circle.dx = R->Circle.x - R->PlayerTwo.x;
         O->Circle.dy = R->Circle.y - R->PlayerTwo.y;
+        O->Circle.By = By;
     }
 
     if (O->Circle.AttachedTo == One)
     {
         /*R->Circle.x = R->PlayerOne.x + O->Circle.dx;
-        R->Circle.y = R->PlayerOne.y + O->Circle.dy;*/ // this one attaches to the point it touches instead of centering on the arm tip
+        R->Circle.y = R->PlayerOne.y + O->Circle.dy;*/
+        // this one attaches to the point it touches instead of centering on the arm tip
 
         if (O->Circle.By == 0)
         {
@@ -386,11 +390,11 @@ void ObjectsUpdate(objects *O, players *P, rects *R, keys *K)
         }
     }
 
-    if (Past && K->Space_Key)
+    if (Past && O->Circle.AttachedTo == One && K->Space_Key)
     {
         O->Circle.AttachedTo = None;
     }
-    if (Past && K->Tab_Key)
+    if (Past && O->Circle.AttachedTo == Two && K->Tab_Key)
     {
         O->Circle.AttachedTo = None;
     }

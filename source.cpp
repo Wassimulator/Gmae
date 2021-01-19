@@ -42,6 +42,7 @@ enum num
 struct object
 {
     int PosX, PosY;
+    int OriginalW, OriginalH;
     SDL_Surface *Surface;
     SDL_Texture *Texture;
     bool ClickableOne, ClickableTwo;
@@ -287,6 +288,23 @@ void ObjectsUpdate(objects *O, players *P, rects *R, keys *K)
 {
     bool Past = false;
     int By;
+
+    O->Circle.PosX = R->Circle.x + R->Circle.w / 2 - WindowWidth / 2;
+    O->Circle.PosY = R->Circle.y + R->Circle.h / 2 - WindowHeight / 2;
+    O->Circle.OriginalW = 16;
+    O->Circle.OriginalH = 16;
+
+    R->Circle.w = O->Circle.OriginalW + 0.1f * O->Circle.PosX;
+    R->Circle.h = O->Circle.OriginalH + 0.1f * O->Circle.PosX;
+    if (R->Circle.h < 3)
+    {
+        R->Circle.h = 3;
+    }
+    if (R->Circle.w < 3)
+    {
+        R->Circle.w = 3;
+    }
+
     if (O->Circle.AttachedTo == One)
     {
         Past = true;
@@ -457,4 +475,44 @@ void SetArms(rects *R)
     R->TwoHand[1].y = R->Arms.TwoVY1 - R->TwoHand[1].h / 2;
     R->TwoHand[2].y = R->Arms.TwoHY2 - R->TwoHand[2].h / 2;
     R->TwoHand[3].y = R->Arms.TwoVY2 - R->TwoHand[3].h / 2;
+}
+
+void InitilizeRects(rects *R)
+{
+    R->PlayfieldRect.h = R->PlayfieldRect.w = 400;
+    R->PlayerOne.h = R->PlayerOne.w = R->PlayerTwo.h = R->PlayerTwo.w = 20;
+    R->Arms.ArmLength = 20;
+
+    R->Circle.h = 16;
+    R->Circle.w = 16;
+
+    for (int i = 0; i < 4; i++)
+    {
+        R->OneHand[i].h = R->OneHand[i].w = R->TwoHand[i].h = R->TwoHand[i].w = 10;
+    }
+
+    R->OneHand[0].x = R->Arms.OneHX1 - R->OneHand[0].w / 2;
+    R->OneHand[1].x = R->Arms.OneVX1 - R->OneHand[1].w / 2;
+    R->OneHand[2].x = R->Arms.OneHX2 - R->OneHand[2].w / 2;
+    R->OneHand[3].x = R->Arms.OneVX2 - R->OneHand[3].w / 2;
+
+    R->OneHand[0].y = R->Arms.OneHY1 - R->OneHand[0].h / 2;
+    R->OneHand[1].y = R->Arms.OneVY1 - R->OneHand[1].h / 2;
+    R->OneHand[2].y = R->Arms.OneHY2 - R->OneHand[2].h / 2;
+    R->OneHand[3].y = R->Arms.OneVY2 - R->OneHand[3].h / 2;
+
+    R->TwoHand[0].x = R->Arms.TwoHX1 - R->TwoHand[0].w / 2;
+    R->TwoHand[1].x = R->Arms.TwoVX1 - R->TwoHand[1].w / 2;
+    R->TwoHand[2].x = R->Arms.TwoHX2 - R->TwoHand[2].w / 2;
+    R->TwoHand[3].x = R->Arms.TwoVX2 - R->TwoHand[3].w / 2;
+
+    R->TwoHand[0].y = R->Arms.TwoHY1 - R->TwoHand[0].h / 2;
+    R->TwoHand[1].y = R->Arms.TwoVY1 - R->TwoHand[1].h / 2;
+    R->TwoHand[2].y = R->Arms.TwoHY2 - R->TwoHand[2].h / 2;
+    R->TwoHand[3].y = R->Arms.TwoVY2 - R->TwoHand[3].h / 2;
+
+    CenterRectXY(&R->PlayfieldRect);
+    CenterRectXY(&R->PlayerOne);
+    CenterRectXY(&R->PlayerTwo);
+    CenterRectXY(&R->Circle);
 }

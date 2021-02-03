@@ -1,6 +1,23 @@
 #include "main.h"
 #include "source.cpp"
 
+void DrawCircle(int r, int x0, int y0, int R, int G, int B)
+{
+    SDL_SetRenderDrawColor(Renderer, R, G, B, 255);
+    for (int j = y0; j <= y0 + r * 2; j++)
+    {
+        for (int i = x0; i <= x0 + r * 2; i++)
+        {
+            int x = i;
+            int y = j;
+            if ((x - x0-r) * (x - x0-r) + (y - y0-r) * (y - y0-r) <= r * r)
+            {
+                SDL_RenderDrawPoint(Renderer, x, y);
+            }
+        }
+    }
+}
+
 void Render(objects *O, rects *R)
 {
     SDL_SetRenderDrawColor(Renderer, 25, 25, 25, 255);
@@ -11,12 +28,12 @@ void Render(objects *O, rects *R)
     SDL_RenderCopy(Renderer, O->Circle.Texture, 0, &R->Circle);
 
     SDL_SetRenderDrawColor(Renderer, 255, 25, 25, 255);
-    SDL_RenderFillRect(Renderer, &R->PlayerOne);
+    DrawCircle(R->PlayerOne.w / 2, R->PlayerOne.x, R->PlayerOne.y, 255, 0, 0);
     SDL_RenderDrawLine(Renderer, R->Arms.OneHX1, R->Arms.OneHY1, R->Arms.OneHX2, R->Arms.OneHY2);
     SDL_RenderDrawLine(Renderer, R->Arms.OneVX1, R->Arms.OneVY1, R->Arms.OneVX2, R->Arms.OneVY2);
 
     SDL_SetRenderDrawColor(Renderer, 25, 25, 255, 255);
-    SDL_RenderFillRect(Renderer, &R->PlayerTwo);
+    DrawCircle(R->PlayerTwo.w / 2, R->PlayerTwo.x, R->PlayerTwo.y, 0, 0, 255);
     SDL_RenderDrawLine(Renderer, R->Arms.TwoHX1, R->Arms.TwoHY1, R->Arms.TwoHX2, R->Arms.TwoHY2);
     SDL_RenderDrawLine(Renderer, R->Arms.TwoVX1, R->Arms.TwoVY1, R->Arms.TwoVX2, R->Arms.TwoVY2);
 
@@ -64,7 +81,8 @@ int main(int argc, char **argv)
     keys Keys;
     fonts Fonts = LoadFonts();
     players P;
-    playfield Playfield;
+    playfield PlayfieldOne;
+    playfield PlayfieldTwo;
     objects O;
     for (int i = 0; i < 4; i++)
     {
@@ -79,10 +97,10 @@ int main(int argc, char **argv)
     P.Two.PosX = -100;
     P.Two.PosY = 0;
 
-    Playfield.limitX0 = WindowWidth / 2 - R.PlayfieldRect.w / 2;
-    Playfield.limitX1 = WindowWidth / 2 + R.PlayfieldRect.w / 2;
-    Playfield.limitY0 = WindowHeight / 2 - R.PlayfieldRect.h / 2;
-    Playfield.limitY1 = WindowHeight / 2 + R.PlayfieldRect.h / 2;
+    PlayfieldOne.limitX0 = WindowWidth / 2 - R.PlayfieldRect.w / 2;
+    PlayfieldOne.limitX1 = WindowWidth / 2 + R.PlayfieldRect.w / 2;
+    PlayfieldOne.limitY0 = WindowHeight / 2 - R.PlayfieldRect.h / 2;
+    PlayfieldOne.limitY1 = WindowHeight / 2 + R.PlayfieldRect.h / 2;
 
     SDL_Event Event;
     while (Running)
@@ -96,7 +114,7 @@ int main(int argc, char **argv)
 
         PollEvents(&Event, &Keys);
 
-        PlayerUpdate(&R, &Keys, &P, Playfield);
+        PlayerUpdate(&R, &Keys, &P, PlayfieldOne);
         SetArms(&R);
         ObjectsUpdate(&O, &P, &R, &Keys);
         Render(&O, &R);

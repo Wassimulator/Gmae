@@ -49,6 +49,8 @@ struct object
     num AttachedTo = None;
     int By;
     int dx, dy;
+    int R, G, B;
+    int R0, G0, B0;
 };
 
 object LoadObject(char *TextureFile)
@@ -293,9 +295,13 @@ void ObjectsUpdate(objects *O, players *P, rects *R, keys *K)
     O->Circle.PosY = R->Circle.y + R->Circle.h / 2 - WindowHeight / 2;
     O->Circle.OriginalW = 16;
     O->Circle.OriginalH = 16;
+    O->Circle.R0= 100;
+    O->Circle.G0= 100;
+    O->Circle.B0= --
 
     R->Circle.w = O->Circle.OriginalW + 0.1f * O->Circle.PosX;
     R->Circle.h = O->Circle.OriginalH + 0.1f * O->Circle.PosX;
+
     if (R->Circle.h < 3)
     {
         R->Circle.h = 3;
